@@ -3,7 +3,7 @@
 ```
 return {
 	{
-		"hsk-kr/licovim",
+		"hsk-kr/licovim.nvim",
 		dependencies = {
 			"nvim-telescope/telescope.nvim",
 			"nvim-telescope/telescope-live-grep-args.nvim",

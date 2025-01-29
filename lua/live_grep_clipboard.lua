@@ -16,6 +16,10 @@ local function open_live_grep_with_path()
 
 	local path = starts_with_root and string.sub(copied_path, #current_path + 1) or copied_path
 
+	if string.sub(path, -1) ~= "/" then
+		path = path .. "/"
+	end
+
 	local default_text = '"" --iglob ' .. path .. "**/*"
 
 	telescope.extensions.live_grep_args.live_grep_args({

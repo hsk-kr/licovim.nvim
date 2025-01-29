@@ -12,15 +12,14 @@ local function open_live_grep_with_path()
 	local copied_path = get_recent_clipboard_content()
 	local current_path = vim.fn.getcwd()
 
-	if #copied_path < #current_path then
-		vim.notify("Check copied path. The path is supposed to be full path:" .. copied_path, vim.log.levels.ERROR)
-		return
-	end
+	local starts_with_root = string.sub(copied_path, 1, #current_path) == current_path
 
-	local path = '"" --iglob ' .. string.sub(copied_path, #current_path + 1) .. "**/*"
+	local path = starts_with_root and string.sub(copied_path, #current_path + 1) or copied_path
+
+	local default_text = '"" --iglob ' .. path .. "**/*"
 
 	telescope.extensions.live_grep_args.live_grep_args({
-		default_text = path,
+		default_text = default_text,
 	})
 end
 

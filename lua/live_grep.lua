@@ -9,7 +9,7 @@ local function get_recent_clipboard_content()
 end
 
 local function open_live_grep(path)
-	local default_text = '"" --iglob ' .. path .. "**/*"
+	local default_text = '"" --iglob ' .. path
 
 	telescope.extensions.live_grep_args.live_grep_args({
 		default_text = default_text,
@@ -37,7 +37,7 @@ local function open_live_grep_with_clipboard()
 		path = path .. "/"
 	end
 
-	open_live_grep(path)
+	open_live_grep(path .. "**/*")
 end
 
 M.open_live_grep_with_clipboard = open_live_grep_with_clipboard

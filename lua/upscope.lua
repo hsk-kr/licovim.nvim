@@ -6,8 +6,13 @@ local function get_current_file_relative_path()
 end
 
 local function get_output_window()
-	-- Check if the output buffer already exists
-	if M.output_buf and vim.api.nvim_buf_is_valid(M.output_buf) then
+	-- Check if the output buffer and window already exist and are valid
+	if
+		M.output_buf
+		and vim.api.nvim_buf_is_valid(M.output_buf)
+		and M.output_win
+		and vim.api.nvim_win_is_valid(M.output_win)
+	then
 		return M.output_buf, M.output_win
 	end
 
@@ -31,6 +36,19 @@ local function get_output_window()
 		border = "single",
 	})
 
+	-- Set up an autocommand to close the window when the buffer is left
+	vim.api.nvim_create_autocmd("BufLeave", {
+		buffer = M.output_buf,
+		callback = function()
+			if vim.api.nvim_win_is_valid(M.output_win) then
+				vim.api.nvim_win_close(M.output_win, true)
+			end
+			-- Invalidate the buffer and window references
+			M.output_buf = nil
+			M.output_win = nil
+		end,
+	})
+
 	return M.output_buf, M.output_win
 end
 
@@ -47,13 +65,6 @@ local function upscope_test_current_file()
 
 	-- Clear previous content
 	vim.api.nvim_buf_set_lines(output_buf, 0, -1, false, {})
-
-	vim.api.nvim_create_autocmd("BufLeave", {
-		buffer = output_buf,
-		callback = function()
-			vim.api.nvim_win_close(output_win, true)
-		end,
-	})
 
 	-- Start the job asynchronously
 	vim.fn.jobstart(command, {

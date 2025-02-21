@@ -14,7 +14,10 @@ return {
 
 # Commands
 
-LicovimLiveGrepWithPath: open live grep with --iglob options based on copied string
+| Name                           | Description                                            |
+| ------------------------------ | ------------------------------------------------------ |
+| LicovimLiveGrepWithClipboard   | open live grep with clipboard string as --iglob option |
+| LicovimLiveGrepWithCurrentPath | open live grep with current path as --iglob option     |
 
 If the copied path is `/etc/` then the string will be
 
@@ -23,5 +26,5 @@ If the copied path is `/etc/` then the string will be
 <b>Example</b>
 
 ```
-vim.api.nvim_set_keymap("n", "<leader>fp", ":LicovimLiveGrepWithPath<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<leader>fp", ":LicovimLiveGrepWithClipboard<CR>", { noremap = true, silent = true })
 ```

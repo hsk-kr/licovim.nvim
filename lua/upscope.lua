@@ -20,10 +20,10 @@ local function get_output_window()
 	M.output_buf = vim.api.nvim_create_buf(false, true)
 
 	-- Define window dimensions
-	local width = math.floor(vim.o.columns * 0.5)
-	local height = math.floor(vim.o.lines * 0.3)
-	local row = math.floor(vim.o.lines * 0.35)
-	local col = math.floor(vim.o.columns * 0.25)
+	local width = math.floor(vim.o.columns * 0.8)
+	local height = math.floor(vim.o.lines * 0.8)
+	local row = math.floor(vim.o.lines * 0.1)
+	local col = math.floor(vim.o.columns * 0.1)
 
 	-- Create a floating window
 	M.output_win = vim.api.nvim_open_win(M.output_buf, true, {

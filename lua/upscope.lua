@@ -40,7 +40,7 @@ local function upscope_test_current_file()
 		print("No file detected.")
 		return
 	end
-	local command = { "upscope", "api", "test", "-t", relative_path }
+	local command = { "upscope", "test", "api", "-t", relative_path }
 
 	-- Get or create the output window
 	local output_buf, output_win = get_output_window()

@@ -11,7 +11,7 @@ local function upscope_test_current_file()
 		print("No file detected.")
 		return
 	end
-	local command = "upscope api test -t " .. vim.fn.shellescape(relative_path)
+	local command = "upscope test api -t " .. vim.fn.shellescape(relative_path)
 	local output = vim.fn.system(command)
 	vim.api.nvim_open_win(vim.api.nvim_create_buf(false, true), true, {
 		relative = "editor",

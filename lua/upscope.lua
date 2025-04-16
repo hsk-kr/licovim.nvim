@@ -87,7 +87,7 @@ local function upscope_test_current_file()
 		end,
 		on_exit = function()
 			-- Optionally, you can handle actions after the process exits
-			vim.api.nvim_buf_set_lines(output_buf, -1, -1, false, { "\nProcess exited." })
+			vim.api.nvim_buf_set_lines(output_buf, -1, -1, false, { "", "Process exited." })
 		end,
 	})
 end

@@ -13,6 +13,10 @@ vim.api.nvim_create_user_command("LicovimTestRunnerRun", function()
 	upscope.upscope_test_current_file()
 end, {})
 
+vim.api.nvim_create_user_command("LicovimTestRunnerRunDebug", function()
+	upscope.upscope_test_current_file_debug()
+end, {})
+
 vim.api.nvim_create_user_command("LicovimTestRunnerToggle", function()
 	upscope.toggle_sidebar()
 end, {})

@@ -57,9 +57,28 @@ function M.open_sidebar()
     vim.bo[M.output_buf].filetype  = "upscope-log"
   end
 
-  -- Use vertical split instead of floating window
-  -- Use botright to ensure it opens on the right side
-  vim.cmd("botright vsplit")
+  -- Save current window to return to it later
+  local current_win = vim.api.nvim_get_current_win()
+  
+  -- Get the rightmost window position
+  local win_pos_right = 0
+  local rightmost_win = nil
+  
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local win_pos = vim.api.nvim_win_get_position(win)[2]
+    if win_pos > win_pos_right then
+      win_pos_right = win_pos
+      rightmost_win = win
+    end
+  end
+  
+  -- Go to the rightmost window first before splitting
+  if rightmost_win then
+    vim.api.nvim_set_current_win(rightmost_win)
+  end
+  
+  -- Now split on the right
+  vim.cmd("vsplit")
   vim.cmd("vertical resize " .. sidebar_width())
   M.output_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(M.output_win, M.output_buf)
@@ -67,6 +86,9 @@ function M.open_sidebar()
   -- Basic options for readability
   vim.wo[M.output_win].wrap = false
   vim.wo[M.output_win].cursorline = true
+  
+  -- Return to the original window
+  vim.api.nvim_set_current_win(current_win)
 
   return M.output_buf, M.output_win
 end

@@ -58,7 +58,8 @@ function M.open_sidebar()
   end
 
   -- Use vertical split instead of floating window
-  vim.cmd("vsplit")
+  -- Use botright to ensure it opens on the right side
+  vim.cmd("botright vsplit")
   vim.cmd("vertical resize " .. sidebar_width())
   M.output_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(M.output_win, M.output_buf)

@@ -1,5 +1,5 @@
 -- Upscope test runner with toggleable sidebar output window
--- Works with Neovim ≥ 0.11
+-- Works with Neovim ≥ 0.11
 
 local M = {}
 
@@ -14,7 +14,7 @@ local function get_current_file_relative_path()
   return vim.fn.fnamemodify(current_file, ":.")
 end
 
----Calculate sidebar width (30 % of the editor, minimum 20 cols)
+---Calculate sidebar width (30 % of the editor, minimum 20 cols)
 ---@return integer
 local function sidebar_width()
   return math.max(math.floor(vim.o.columns * 0.30), 20)
@@ -29,6 +29,13 @@ local function job_is_running()
   return status == -1
 end
 
+---Check if the current file is a test file
+---@return boolean
+local function is_test_file()
+  local filename = vim.fn.expand("%:t")
+  return string.find(filename, "test") ~= nil
+end
+
 ---------------------------------------------------------------------
 -- Window management -------------------------------------------------
 ---------------------------------------------------------------------
@@ -39,6 +46,7 @@ function M.open_sidebar()
   -- Re‑use valid buffer/window if available
   if M.output_buf and vim.api.nvim_buf_is_valid(M.output_buf)
       and M.output_win and vim.api.nvim_win_is_valid(M.output_win) then
+    vim.api.nvim_set_current_win(M.output_win)
     return M.output_buf, M.output_win
   end
 
@@ -49,21 +57,11 @@ function M.open_sidebar()
     vim.bo[M.output_buf].filetype  = "upscope-log"
   end
 
-  -- Floating sidebar on the RHS
-  local width  = sidebar_width()
-  local height = vim.o.lines - 2 -- leave a line for cmd‑line
-  local col    = vim.o.columns - width
-  local row    = 0
-
-  M.output_win = vim.api.nvim_open_win(M.output_buf, true, {
-    relative = "editor",
-    width    = width,
-    height   = height,
-    col      = col,
-    row      = row,
-    style    = "minimal",
-    border   = "single",
-  })
+  -- Use vertical split instead of floating window
+  vim.cmd("vsplit")
+  vim.cmd("vertical resize " .. sidebar_width())
+  M.output_win = vim.api.nvim_get_current_win()
+  vim.api.nvim_win_set_buf(M.output_win, M.output_buf)
 
   -- Basic options for readability
   vim.wo[M.output_win].wrap = false
@@ -110,7 +108,13 @@ function M.upscope_test_current_file()
     return
   end
 
-  -- Always show the sidebar; don’t start a new job if one is active
+  -- Check if file is a test file
+  if not is_test_file() then
+    vim.notify("Not a test file. Skipping test run.", vim.log.levels.WARN, { title = "Upscope" })
+    return
+  end
+
+  -- Always show the sidebar; don't start a new job if one is active
   local output_buf = M.open_sidebar()
 
   if job_is_running() then
@@ -164,12 +168,81 @@ function M.upscope_test_current_file()
   end
 end
 
+---Run upscope tests for the current file with debug flag
+function M.upscope_test_current_file_debug()
+  local relative_path = get_current_file_relative_path()
+  if relative_path == "" then
+    vim.notify("No file detected.", vim.log.levels.WARN)
+    return
+  end
+
+  -- Check if file is a test file
+  if not is_test_file() then
+    vim.notify("Not a test file. Skipping test run.", vim.log.levels.WARN, { title = "Upscope" })
+    return
+  end
+
+  -- Always show the sidebar; don't start a new job if one is active
+  local output_buf = M.open_sidebar()
+
+  if job_is_running() then
+    vim.notify("Upscope test already running – showing output only.", vim.log.levels.INFO, { title = "Upscope" })
+    return
+  end
+
+  -- Clear previous content
+  vim.api.nvim_buf_set_lines(output_buf, 0, -1, false, {})
+
+  -------------------------------------------------------------------
+  -- Start async job with debug flag --------------------------------
+  -------------------------------------------------------------------
+
+  local command = { "upscope", "test", "api", "-d", "-t", relative_path }
+
+  M.job_id = vim.fn.jobstart(command, {
+    stdout_buffered = false,
+
+    on_stdout = function(_, data)
+      if not data then return end
+      vim.schedule(function()
+        vim.api.nvim_buf_set_lines(output_buf, -1, -1, false, data)
+        -- Auto‑scroll to bottom when sidebar is visible
+        if M.output_win and vim.api.nvim_win_is_valid(M.output_win) then
+          vim.api.nvim_win_set_cursor(M.output_win, { vim.api.nvim_buf_line_count(output_buf), 0 })
+        end
+      end)
+    end,
+
+    on_stderr = function(_, data)
+      if not data then return end
+      vim.schedule(function()
+        vim.api.nvim_buf_set_lines(output_buf, -1, -1, false, data)
+      end)
+    end,
+
+    on_exit = function(_, code)
+      vim.schedule(function()
+        local msg = (code == 0) and "Process finished successfully."
+                    or ("Process exited with code " .. code .. ".")
+        vim.api.nvim_buf_set_lines(output_buf, -1, -1, false, { "", msg })
+        M.job_id = nil
+      end)
+    end,
+  })
+
+  if M.job_id <= 0 then
+    vim.notify("Failed to start upscope test (executable not found?)", vim.log.levels.ERROR, { title = "Upscope" })
+    M.job_id = nil
+  end
+end
+
 ---------------------------------------------------------------------
 -- User‑friendly commands & keymaps (optional) -----------------------
 ---------------------------------------------------------------------
 
 -- Example commands (uncomment to enable)
 -- vim.api.nvim_create_user_command("UpscopeTest",   M.upscope_test_current_file, {})
+-- vim.api.nvim_create_user_command("UpscopeTestDebug", M.upscope_test_current_file_debug, {})
 -- vim.api.nvim_create_user_command("UpscopeToggle", M.toggle_sidebar,           {})
 -- vim.api.nvim_create_user_command("UpscopeClear",  M.clear_output,             {})
 
